@@ -19,11 +19,12 @@ class CommandManager(object):
         if len(matches) == 1:
             return matches[0].__name__
         elif len(matches) == 0:
-            print(f"Unknown command '{s}'")
+            print("Unknown command '{}'".format(s))
         else:
-            print(f"Ambigious command '{s}'; choose from the following:")
+            msg = "Ambigious command '{}'; choose from the following:"
+            print(msg.format(s))
             for match in matches:
-                print(f'  {match.__name__}')
+                print('  {}'.format(match.__name__))
         sys.exit(1)
 
     def __iter__(self):

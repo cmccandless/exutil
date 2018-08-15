@@ -1,6 +1,9 @@
-#!/usr/bin/env python3.6
+from __future__ import print_function
 import argparse
-import builtins
+try:
+    import builtins
+except ImportError:
+    import __builtin__ as builtins
 import sys
 from glob import glob
 from importlib import import_module
@@ -12,12 +15,12 @@ from .tracks.argparse_ext import (
 
 from .CommandManager import CommandManager
 
-VERSION = '0.1.2'
+VERSION = '0.2.0'
 opts = None
 track = None
 
 
-def print(*args, level=0, **kwargs):
+def print(*args, **kwargs):
     kwargs = dict(kwargs)
     kwargs['flush'] = kwargs.get('flush', True)
     return builtins.print(*args, **kwargs)
@@ -33,7 +36,7 @@ def main(args=None):
     parser.add_argument(
         '--version',
         action='version',
-        version=f'%(prog)s {VERSION}'
+        version='%(prog)s {}'.format(VERSION)
     )
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('-i', '--ignore', action=ExtendAction, default=[])
