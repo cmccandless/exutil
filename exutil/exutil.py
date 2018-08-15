@@ -15,7 +15,7 @@ from .tracks.argparse_ext import (
 
 from .CommandManager import CommandManager
 
-VERSION = '0.2.0'
+VERSION = '0.2.1'
 opts = None
 track = None
 
@@ -36,7 +36,10 @@ def main(args=None):
     parser.add_argument(
         '--version',
         action='version',
-        version='%(prog)s {}'.format(VERSION)
+        version='%(prog)s {} using Python {}.{}.{}'.format(
+            VERSION,
+            *sys.version_info,
+        )
     )
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('-i', '--ignore', action=ExtendAction, default=[])
