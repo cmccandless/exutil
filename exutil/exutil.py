@@ -12,7 +12,7 @@ from .tracks.argparse_ext import (
 
 from .CommandManager import CommandManager
 
-VERSION = '0.1.0'
+VERSION = '0.1.1'
 opts = None
 track = None
 

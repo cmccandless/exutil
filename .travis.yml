@@ -36,5 +36,5 @@ deploy:
     branch: master
     tags: true
     distributions: sdist bdist_wheel
-    repo: cmccandless/multisite
+    repo: cmccandless/exutil
     python: '3.6'
