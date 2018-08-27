@@ -83,6 +83,9 @@ class Track(object):
             self.submit,
         ]
 
+    def __iter__(self):
+        return (c.__name__ for c in self.commands)
+
     def find_best(self, command):
         matches = [
             c for c in self.commands

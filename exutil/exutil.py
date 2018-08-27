@@ -13,9 +13,7 @@ from .tracks.argparse_ext import (
     ExtendAction,
 )
 
-from .CommandManager import CommandManager
-
-VERSION = '0.2.3'
+VERSION = '0.2.4'
 opts = None
 track = None
 
@@ -24,9 +22,6 @@ def print(*args, **kwargs):
     kwargs = dict(kwargs)
     kwargs['flush'] = kwargs.get('flush', True)
     return builtins.print(*args, **kwargs)
-
-
-cmd_mgr = CommandManager()
 
 
 def main(args=None):
@@ -52,7 +47,7 @@ def main(args=None):
     parser.add_argument(
         'command',
         action=ExtendAction,
-        help=','.join(list(cmd_mgr))
+        help=','.join(sorted(tracks.Track()))
     )
     parser.add_argument('exercise', action=ExtendAction, nargs='+')
     opts = parser.parse_args(args)
