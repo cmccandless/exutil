@@ -13,7 +13,7 @@ from .tracks.argparse_ext import (
     ExtendAction,
 )
 
-VERSION = '0.2.4'
+VERSION = '0.2.5'
 opts = None
 track = None
 
@@ -58,6 +58,7 @@ def main(args=None):
     track = track_module.Track()
     for pattern in opts.exercise:
         for ex in glob(pattern):
+            ex = ex.strip('/')
             if ex in opts.ignore:
                 continue
             for command in opts.command:
