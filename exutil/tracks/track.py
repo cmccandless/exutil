@@ -127,19 +127,19 @@ class Track(object):
             )
 
     @task('submitting')
-    def submit(self, exercise, opts=None):
+    def submit(self, exercise, opts=None, **kwargs):
         return exercism('submit', *self.get_deliverables(exercise))
 
     @task('testing')
-    def test(self, exercise, opts=None):
+    def test(self, exercise, opts=None, **kwargs):
         raise NotImplementedError()
 
     @task('restoring')
-    def restore(self, exercise, opts=None):
+    def restore(self, exercise, opts=None, **kwargs):
         print(f'Removing {exercise}/')
         shutil.rmtree(exercise)
         git('checkout', '--', exercise)
 
     @task('checking in')
-    def checkin(self, exercise, opts=None):
+    def checkin(self, exercise, opts=None, **kwargs):
         git('add', exercise)
