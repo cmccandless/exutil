@@ -15,7 +15,7 @@ from .tracks.argparse_ext import (
     ExtendAction,
 )
 
-VERSION = '0.3.0'
+VERSION = '0.3.1'
 opts = None
 track = None
 

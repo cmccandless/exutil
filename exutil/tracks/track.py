@@ -46,17 +46,19 @@ def capture():
 def task(action):
     def _dec(function):
         @wraps(function)
-        def _wrapper(self, target, *args, opts=None, **kwargs):
+        def _wrapper(self, target, *args, **kwargs):
+            opts = kwargs.pop('opts', None)
             if isinstance(target, Track):
                 target = args[0]
             print(f'{action.title()} {target}...', end='')
             try:
-                if opts.verbose:
+                if opts and opts.verbose:
+                    kwargs['verbose'] = True
                     print()
                     function(self, target, *args, **kwargs)
                 else:
                     with capture():
-                        function(self, target, *args, opts=opts, **kwargs)
+                        function(self, target, *args, **kwargs)
                 print('Done')
             except sp.CalledProcessError as e:
                 sys.stdout.flush()
