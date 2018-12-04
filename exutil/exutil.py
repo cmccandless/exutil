@@ -15,7 +15,7 @@ from .tracks.argparse_ext import (
     ExtendAction,
 )
 
-VERSION = '0.3.2'
+VERSION = '0.4.0'
 opts = None
 track = None
 
@@ -92,12 +92,24 @@ def main(args=None):
         package='exutil.tracks'
     )
     track = track_module.Track()
+    commands = [
+        c for c in map(track.find_best, opts.command)
+        if c is not None
+    ]
+    do_download = track.download in commands
+    if do_download:
+        commands.remove(track.download)
+        if 'next' in opts.exercise:
+            track.download('next')
+            opts.exercise.remove('next')
     for pattern in opts.exercise:
+        if do_download:
+            track.download(pattern)
         for ex in glob(pattern):
             ex = ex.strip('/')
             if ex in opts.ignore:
                 continue
-            for command in opts.command:
+            for command in commands:
                 command = track.find_best(command)
                 ret = command(ex, opts=opts)
                 if ret not in {None, 0}:

@@ -5,19 +5,26 @@ import sys
 from contextlib import contextmanager
 from functools import wraps
 from io import StringIO
+import requests
+import json
+
+BASE_CONFIG_URL = 'https://raw.githubusercontent.com/exercism/{track}/master/config.json'
 
 
-def terminal(*args):
+def terminal(*args, verbose=False):
     print(' '.join(args))
-    sp.check_call(args)
+    kwargs = {}
+    if not verbose:
+        kwargs['stdout'] = kwargs['stderr'] = sp.DEVNULL
+    sp.check_call(args, **kwargs)
 
 
-def exercism(*args):
-    terminal('exercism', *args)
+def exercism(*args, **kwargs):
+    terminal('exercism', *args, **kwargs)
 
 
-def git(*args):
-    terminal('git', *args)
+def git(*args, **kwargs):
+    terminal('git', *args, **kwargs)
 
 
 def copytree(src, dst, symlinks=False, ignore=None):
@@ -48,9 +55,13 @@ def task(action):
         @wraps(function)
         def _wrapper(self, target, *args, **kwargs):
             opts = kwargs.pop('opts', None)
+            if target == 'next':
+                target = self.get_next_exercise(
+                    core=kwargs.get('core_only', False)
+                )
             if isinstance(target, Track):
                 target = args[0]
-            print(f'{action.title()} {target}...', end='')
+            print(f'{action.title()} {target}...', end='', flush=True)
             try:
                 if opts and opts.verbose:
                     kwargs['verbose'] = True
@@ -78,6 +89,7 @@ class Track(object):
     def __init__(self):
         self.name = self.__class__.__name__
         self.commands = [
+            self.download,
             self.migrate,
             self.test,
             self.restore,
@@ -106,12 +118,44 @@ class Track(object):
     def get_deliverables(self, exercise, opts=None):
         raise NotImplementedError()
 
+    def get_exercises(self, core=False):
+        url = BASE_CONFIG_URL.format(track=self.name.lower())
+        resp = requests.get(url)
+        data = json.loads(resp.text)
+        for exercise in data['exercises']:
+            if exercise.get('deprecated', False):
+                continue
+            if not core or exercise.get('core', False):
+                yield exercise['slug']
+
+    def get_next_exercise(self, core=False):
+        for exercise in self.get_exercises(core=core):
+            if not os.path.isdir(exercise):
+                return exercise
+
+    def download_exercise(self, exercise, verbose=False):
+        return exercism(
+            'download', '-t', self.name.lower(), '-e', exercise,
+            verbose=verbose
+        )
+
+    @task('downloading')
+    def download(self, exercise, *args, **kwargs):
+        verbose = kwargs.pop('verbose', False)
+        if exercise.lower() == 'next':
+            exercise = self.get_next_exercise(
+                core=kwargs.get('core_only', False)
+            )
+        return self.download_exercise(exercise, verbose=verbose)
+
     @task('migrating')
     def migrate(self, exercise, *args, **kwargs):
+        opts = kwargs.pop('opts')
+        verbose = kwargs.pop('verbose', False)
         if os.path.isfile(os.path.join(exercise, '.solution.json')):
             print(f'{exercise} has already been migrated')
             return
-        exercism('download', '-t', 'python', '-e', exercise)
+        self.download_exercise(exercise, verbose=verbose)
         src_dir = '{}-2'.format(exercise)
         if os.path.isdir(src_dir):
             print(f'Copying {src_dir}/*->{exercise}')
@@ -120,26 +164,25 @@ class Track(object):
             shutil.rmtree(src_dir)
         for filepath in self.get_deliverables(exercise, **kwargs):
             print(f'Restoring {filepath}')
-            globals()['git'](
-                'checkout',
-                '--',
-                filepath
-            )
+            git('checkout', '--', filepath, verbose=verbose)
 
     @task('submitting')
-    def submit(self, exercise, opts=None, **kwargs):
-        return exercism('submit', *self.get_deliverables(exercise))
+    def submit(self, exercise, opts=None, verbose=False, **kwargs):
+        return exercism(
+            'submit', *self.get_deliverables(exercise),
+            verbose=verbose
+        )
 
     @task('testing')
     def test(self, exercise, opts=None, **kwargs):
         raise NotImplementedError()
 
     @task('restoring')
-    def restore(self, exercise, opts=None, **kwargs):
+    def restore(self, exercise, opts=None, verbose=False, **kwargs):
         print(f'Removing {exercise}/')
         shutil.rmtree(exercise)
-        git('checkout', '--', exercise)
+        git('checkout', '--', exercise, verbose=verbose)
 
     @task('checking in')
-    def checkin(self, exercise, opts=None, **kwargs):
-        git('add', exercise)
+    def checkin(self, exercise, opts=None, verbose=False, **kwargs):
+        git('add', exercise, verbose=verbose)

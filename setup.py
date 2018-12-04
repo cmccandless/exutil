@@ -27,6 +27,6 @@ if __name__ == '__main__':
                 'exutil = exutil:main'
             ],
         },
-        install_requires=[],
+        install_requires=['requests'],
         include_package_data=True
     )
