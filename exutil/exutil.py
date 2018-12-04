@@ -15,7 +15,7 @@ from .tracks.argparse_ext import (
     ExtendAction,
 )
 
-VERSION = '0.4.0'
+VERSION = '0.4.1'
 opts = None
 track = None
 
@@ -110,7 +110,6 @@ def main(args=None):
             if ex in opts.ignore:
                 continue
             for command in commands:
-                command = track.find_best(command)
                 ret = command(ex, opts=opts)
                 if ret not in {None, 0}:
                     sys.exit(ret)
