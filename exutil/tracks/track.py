@@ -56,7 +56,7 @@ def task(action):
                     function(self, target, *args, **kwargs)
                 else:
                     with capture():
-                        function(self, target, *args, **kwargs)
+                        function(self, target, *args, opts=opts, **kwargs)
                 print('Done')
             except sp.CalledProcessError as e:
                 sys.stdout.flush()
