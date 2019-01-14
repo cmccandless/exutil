@@ -11,11 +11,12 @@ class Python(Track):
         return [solution_file_path]
 
     @task('testing')
-    def test(self, exercise, opts=None):
+    def test(self, exercise, opts=None, verbose=False):
         args = ['-x', exercise]
+        if verbose:
+            args.insert(0, '-v')
         if opts is not None and opts.timeout is not None:
             args.extend(('--timeout', opts.timeout))
-        print(' '.join(['pytest', *args]))
         ret = pytest.main(args)
         return ret
 

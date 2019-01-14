@@ -1,5 +1,6 @@
 import os
 import shutil
+import shlex
 import subprocess as sp
 import sys
 from contextlib import contextmanager
@@ -11,20 +12,20 @@ import json
 BASE_CONFIG_URL = 'https://raw.githubusercontent.com/exercism/{track}/master/config.json'
 
 
-def terminal(*args, verbose=False):
+def terminal(*args, verbose=False, **kwargs):
     print(' '.join(args))
-    kwargs = {}
     if not verbose:
         kwargs['stdout'] = kwargs['stderr'] = sp.DEVNULL
     sp.check_call(args, **kwargs)
+    return 0
 
 
 def exercism(*args, **kwargs):
-    terminal('exercism', *args, **kwargs)
+    return terminal('exercism', *args, **kwargs)
 
 
 def git(*args, **kwargs):
-    terminal('git', *args, **kwargs)
+    return terminal('git', *args, **kwargs)
 
 
 def copytree(src, dst, symlinks=False, ignore=None):
@@ -55,6 +56,8 @@ def task(action):
         @wraps(function)
         def _wrapper(self, target, *args, **kwargs):
             opts = kwargs.pop('opts', None)
+            if 'verbose' not in kwargs:
+                kwargs['verbose'] = opts and opts.verbose
             if target == 'next':
                 target = self.get_next_exercise(
                     core=kwargs.get('core_only', False)
@@ -63,8 +66,7 @@ def task(action):
                 target = args[0]
             print(f'{action.title()} {target}...', end='', flush=True)
             try:
-                if opts and opts.verbose:
-                    kwargs['verbose'] = True
+                if kwargs['verbose']:
                     print()
                     function(self, target, *args, **kwargs)
                 else:
@@ -91,6 +93,7 @@ class Track(object):
         self.commands = [
             self.download,
             self.migrate,
+            self.lint,
             self.test,
             self.restore,
             self.checkin,
@@ -142,15 +145,31 @@ class Track(object):
     @task('downloading')
     def download(self, exercise, *args, **kwargs):
         verbose = kwargs.pop('verbose', False)
+        init_script = kwargs.pop('init_script', None)
         if exercise.lower() == 'next':
             exercise = self.get_next_exercise(
                 core=kwargs.get('core_only', False)
             )
-        return self.download_exercise(exercise, verbose=verbose)
+        ret = self.download_exercise(exercise, verbose=verbose)
+        if ret == 0 and init_script is not None:
+            init_script = init_script.format(
+                track=self.name,
+                exercise=exercise,
+            )
+            init_script = shlex.split(init_script)
+            if os.path.isfile(init_script[0]):
+                init_script[0] = os.path.abspath(init_script[0])
+            ret = terminal(
+                *init_script,
+                verbose=verbose,
+                shell=True,
+                cwd=exercise,
+            )
+        return ret
 
     @task('migrating')
     def migrate(self, exercise, *args, **kwargs):
-        opts = kwargs.pop('opts')
+        kwargs.pop('opts', None)
         verbose = kwargs.pop('verbose', False)
         if os.path.isfile(os.path.join(exercise, '.solution.json')):
             print(f'{exercise} has already been migrated')
@@ -172,6 +191,10 @@ class Track(object):
             'submit', *self.get_deliverables(exercise),
             verbose=verbose
         )
+
+    @task('linting')
+    def lint(self, exercise, opts=None, **kwargs):
+        raise NotImplementedError()
 
     @task('testing')
     def test(self, exercise, opts=None, **kwargs):

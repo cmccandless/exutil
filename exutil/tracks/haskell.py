@@ -1,19 +1,21 @@
+from glob import glob
 import os
 import subprocess
 
 from .track import Track, task
 
 
-class Bash(Track):
+class Haskell(Track):
     def get_deliverables(self, exercise, opts=None):
-        solution_file_name = '{}.sh'.format(exercise.replace('-', '_'))
-        solution_file_path = os.path.join(exercise, solution_file_name)
-        return [solution_file_path]
+        # exercise_name = exercise.replace('-', ' ').title().replace(' ', '')
+        solution_file_pattern = os.path.join(
+            exercise, 'src', '*.hs'
+        )
+        return glob(solution_file_pattern)
 
     @task('linting')
     def lint(self, exercise, verbose=False, **kwargs):
-        solution_file_name = '{}.sh'.format(exercise.replace('-', '_'))
-        args = ['shellcheck', solution_file_name]
+        args = ['hlint', 'src']
         kwargs = dict(cwd=exercise)
         if not verbose:
             kwargs['stderr'] = subprocess.DEVNULL
@@ -22,9 +24,8 @@ class Bash(Track):
         return 0
 
     @task('testing')
-    def test(self, exercise, verbose=False):
-        test_file_name = '{}_test.sh'.format(exercise.replace('-', '_'))
-        args = ['bats', test_file_name]
+    def test(self, exercise, verbose=False, **kwargs):
+        args = ['stack', 'test']
         kwargs = dict(cwd=exercise)
         if not verbose:
             kwargs['stderr'] = subprocess.DEVNULL
@@ -33,4 +34,4 @@ class Bash(Track):
         return 0
 
 
-Track = Bash
+Track = Haskell

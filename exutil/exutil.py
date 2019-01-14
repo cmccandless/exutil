@@ -9,13 +9,14 @@ import sys
 from glob import glob
 from importlib import import_module
 import os
+import logging
 
 from . import tracks  # NOQA; needed for dynamic import below
 from .tracks.argparse_ext import (
     ExtendAction,
 )
 
-VERSION = '0.4.1'
+VERSION = '0.5.0'
 opts = None
 track = None
 
@@ -45,8 +46,12 @@ def get_config(config_file=None):
     if config_file is None:
         config_file = get_config_file()
     if config_file is not None:
-        with open(config_file) as f:
-            return json.load(f)
+        try:
+            with open(config_file) as f:
+                return json.load(f)
+        except json.decoder.JSONDecodeError as e:
+            logging.error('.exutil format error: ' + str(e))
+            sys.exit(1)
     return DEFAULT_CONFIG
 
 
@@ -63,6 +68,7 @@ def main(args=None):
         )
     )
     parser.add_argument('-v', '--verbose', action='store_true')
+    parser.add_argument('--debug', action='store_true', help=argparse.SUPPRESS)
     parser.add_argument('-c', '--config', help='config file')
     parser.add_argument('-i', '--ignore', action=ExtendAction, default=[])
     parser.add_argument(
@@ -83,6 +89,12 @@ def main(args=None):
     )
     parser.add_argument('exercise', action=ExtendAction, nargs='+')
     opts = parser.parse_args(args)
+    if opts.debug:
+        logging.basicConfig(level=logging.DEBUG)
+    elif opts.verbose:
+        logging.basicConfig(level=logging.INFO)
+    else:
+        logging.basicConfig(level=logging.WARNING)
     config = get_config(opts.config)
     for attr, config_value in config.items():
         if getattr(opts, attr, None) is None:
@@ -97,16 +109,40 @@ def main(args=None):
         if c is not None
     ]
     do_download = track.download in commands
+    init_script = getattr(opts, "init_script", None)
     if do_download:
         commands.remove(track.download)
         if 'next' in opts.exercise:
-            track.download('next')
+            ret = track.download(
+                'next',
+                verbose=opts.verbose,
+                init_script=init_script
+            )
+            if ret not in {None, 0}:
+                sys.exit(ret)
             opts.exercise.remove('next')
     for pattern in opts.exercise:
         if do_download:
-            track.download(pattern)
-        for ex in glob(pattern):
+            ret = track.download(
+                pattern,
+                verbose=opts.verbose,
+                init_script=init_script
+            )
+            if ret not in {None, 0}:
+                logging.error('Download failed!')
+                sys.exit(ret)
+        exercises = glob(pattern)
+        if not exercises:
+            print('exercise {} not found'.format(pattern))
+            sys.exit(1)
+        for ex in exercises:
             ex = ex.strip('/')
+            if (
+                not os.path.isdir(ex) or
+                not os.path.isfile(os.path.join(ex, '.solution.json'))
+            ):
+                logging.error('{} is not an exercise'.format(ex))
+                continue
             if ex in opts.ignore:
                 continue
             for command in commands:

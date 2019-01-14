@@ -1,19 +1,23 @@
+# from glob import glob
 import os
 import subprocess
 
 from .track import Track, task
 
 
-class Bash(Track):
+class Javascript(Track):
     def get_deliverables(self, exercise, opts=None):
-        solution_file_name = '{}.sh'.format(exercise.replace('-', '_'))
+        solution_file_name = '{}.js'.format(exercise)
         solution_file_path = os.path.join(exercise, solution_file_name)
         return [solution_file_path]
 
     @task('linting')
     def lint(self, exercise, verbose=False, **kwargs):
-        solution_file_name = '{}.sh'.format(exercise.replace('-', '_'))
-        args = ['shellcheck', solution_file_name]
+        args = [
+            'eslint',
+            '--config', os.path.join(os.getcwd(), '.eslintrc.json'),
+            '*.js'
+        ]
         kwargs = dict(cwd=exercise)
         if not verbose:
             kwargs['stderr'] = subprocess.DEVNULL
@@ -22,9 +26,8 @@ class Bash(Track):
         return 0
 
     @task('testing')
-    def test(self, exercise, verbose=False):
-        test_file_name = '{}_test.sh'.format(exercise.replace('-', '_'))
-        args = ['bats', test_file_name]
+    def test(self, exercise, verbose=False, **kwargs):
+        args = ['npm', 'test']
         kwargs = dict(cwd=exercise)
         if not verbose:
             kwargs['stderr'] = subprocess.DEVNULL
@@ -33,4 +36,4 @@ class Bash(Track):
         return 0
 
 
-Track = Bash
+Track = Javascript
