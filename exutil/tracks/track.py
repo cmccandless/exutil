@@ -56,8 +56,10 @@ def task(action):
         @wraps(function)
         def _wrapper(self, target, *args, **kwargs):
             opts = kwargs.pop('opts', None)
-            if 'verbose' not in kwargs:
-                kwargs['verbose'] = opts and opts.verbose
+            if opts:
+                if 'verbose' not in kwargs:
+                    kwargs['verbose'] = opts.verbose
+                kwargs['args'] = opts.__dict__.get('args', None)
             if target == 'next':
                 target = self.get_next_exercise(
                     core=kwargs.get('core_only', False)

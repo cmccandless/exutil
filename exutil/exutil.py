@@ -139,7 +139,10 @@ def main(args=None):
             ex = ex.strip('/')
             if (
                 not os.path.isdir(ex) or
-                not os.path.isfile(os.path.join(ex, '.solution.json'))
+                (
+                    not os.path.isfile(os.path.join(ex, '.solution.json')) and
+                    track.migrate not in commands
+                )
             ):
                 logging.error('{} is not an exercise'.format(ex))
                 continue
