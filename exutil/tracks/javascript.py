@@ -6,7 +6,7 @@ from .track import Track, task
 
 
 class Javascript(Track):
-    def get_deliverables(self, exercise, opts=None):
+    def get_deliverables(self, exercise, opts=None, **kwargs):
         solution_file_name = '{}.js'.format(exercise)
         solution_file_path = os.path.join(exercise, solution_file_name)
         return [solution_file_path]

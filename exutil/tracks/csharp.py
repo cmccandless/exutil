@@ -5,14 +5,14 @@ from .track import Track, task
 
 
 class CSharp(Track):
-    def get_deliverables(self, exercise, opts=None):
+    def get_deliverables(self, exercise, opts=None, **kwargs):
         exercise_name = exercise.replace('-', ' ').title().replace(' ', '')
         solution_file_name = '{}.cs'.format(exercise_name)
         solution_file_path = os.path.join(exercise, solution_file_name)
         return [solution_file_path]
 
     @task('testing')
-    def test(self, exercise, verbose=False):
+    def test(self, exercise, verbose=False, **kwargs):
         args = ['dotnet', 'test']
         kwargs = dict(cwd=exercise)
         if not verbose:

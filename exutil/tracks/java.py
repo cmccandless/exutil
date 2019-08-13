@@ -6,7 +6,7 @@ from .track import Track, task
 
 
 class Java(Track):
-    def get_deliverables(self, exercise, opts=None):
+    def get_deliverables(self, exercise, opts=None, **kwargs):
         # exercise_name = exercise.replace('-', ' ').title().replace(' ', '')
         solution_file_pattern = os.path.join(
             exercise, 'src', 'main', 'java', '*.java'
@@ -14,7 +14,7 @@ class Java(Track):
         return glob(solution_file_pattern)
 
     @task('testing')
-    def test(self, exercise, verbose=False):
+    def test(self, exercise, verbose=False, **kwargs):
         args = ['gradle', 'test']
         kwargs = dict(cwd=exercise)
         if not verbose:

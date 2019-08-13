@@ -5,7 +5,7 @@ from .track import Track, task
 
 
 class Bash(Track):
-    def get_deliverables(self, exercise, opts=None):
+    def get_deliverables(self, exercise, opts=None, **kwargs):
         solution_file_name = '{}.sh'.format(exercise.replace('-', '_'))
         solution_file_path = os.path.join(exercise, solution_file_name)
         return [solution_file_path]
@@ -22,7 +22,7 @@ class Bash(Track):
         return 0
 
     @task('testing')
-    def test(self, exercise, verbose=False):
+    def test(self, exercise, verbose=False, **kwargs):
         test_file_name = '{}_test.sh'.format(exercise.replace('-', '_'))
         args = ['bats', test_file_name]
         kwargs = dict(cwd=exercise)

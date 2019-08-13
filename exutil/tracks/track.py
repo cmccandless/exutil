@@ -33,6 +33,7 @@ def copytree(src, dst, symlinks=False, ignore=None):
         s = os.path.join(src, item)
         d = os.path.join(dst, item)
         if os.path.isdir(s):
+            shutil.rmtree(d)
             shutil.copytree(s, d, symlinks, ignore)
         else:
             shutil.copy2(s, d)
@@ -173,7 +174,7 @@ class Track(object):
     def migrate(self, exercise, *args, **kwargs):
         kwargs.pop('opts', None)
         verbose = kwargs.pop('verbose', False)
-        if os.path.isfile(os.path.join(exercise, '.solution.json')):
+        if os.path.isfile(os.path.join(exercise, '.exercism', 'metadata.json')):
             print(f'{exercise} has already been migrated')
             return
         self.download_exercise(exercise, verbose=verbose)

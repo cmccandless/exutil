@@ -110,6 +110,7 @@ def main(args=None):
     ]
     do_download = track.download in commands
     init_script = getattr(opts, "init_script", None)
+    ignore = set(getattr(opts, 'non_exercises', []))
     if do_download:
         commands.remove(track.download)
         if 'next' in opts.exercise:
@@ -131,7 +132,10 @@ def main(args=None):
             if ret not in {None, 0}:
                 logging.error('Download failed!')
                 sys.exit(ret)
-        exercises = glob(pattern)
+        exercises = [
+            path for path in glob(pattern)
+            if path.rstrip('/') not in ignore
+        ]
         if not exercises:
             print('exercise {} not found'.format(pattern))
             sys.exit(1)
@@ -140,7 +144,12 @@ def main(args=None):
             if (
                 not os.path.isdir(ex) or
                 (
-                    not os.path.isfile(os.path.join(ex, '.solution.json')) and
+                    not (
+                        os.path.isfile(os.path.join(ex, '.solution.json')) or
+                        os.path.isfile(os.path.join(
+                            ex, '.exercism', 'metadata.json'
+                        ))
+                    ) and
                     track.migrate not in commands
                 )
             ):

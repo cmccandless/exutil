@@ -6,8 +6,7 @@ from .track import Track, task
 
 
 class Haskell(Track):
-    def get_deliverables(self, exercise, opts=None):
-        # exercise_name = exercise.replace('-', ' ').title().replace(' ', '')
+    def get_deliverables(self, exercise, opts=None, **kwargs):
         solution_file_pattern = os.path.join(
             exercise, 'src', '*.hs'
         )
